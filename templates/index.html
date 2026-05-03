@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔐 Password Strength Checker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg:        #080c14;
+            --surface:   #0d1424;
+            --surface2:  #111d30;
+            --border:    #1e2d47;
+            --border2:   #243550;
+            --accent:    #3b82f6;
+            --accent2:   #60a5fa;
+            --green:     #10b981;
+            --yellow:    #f59e0b;
+            --red:       #ef4444;
+            --purple:    #8b5cf6;
+            --orange:    #f97316;
+            --text:      #e2e8f0;
+            --muted:     #64748b;
+            --muted2:    #94a3b8;
+            --mono:      'JetBrains Mono', monospace;
+            --sans:      'Syne', sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--sans);
+            background: var(--bg);
+            min-height: 100vh;
+            color: var(--text);
+            overflow-x: hidden;
+        }
+
+        /* ── Grid background ────────────────────────────── */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(59,130,246,0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(59,130,246,0.04) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ── Layout ─────────────────────────────────────── */
+        .shell {
+            position: relative;
+            z-index: 1;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem 4rem;
+        }
+
+        /* ── Header ─────────────────────────────────────── */
+        header {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            margin-bottom: 2.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .brand {
+            font-size: 2.6rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            line-height: 1;
+        }
+
+        .brand span.icon { margin-right: 0.4rem; }
+
+        .brand-sub {
+            font-family: var(--mono);
+            font-size: 0.75rem;
+            color: var(--muted);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-top: 0.3rem;
+        }
+
+        .privacy-pill {
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            color: var(--muted2);
+            border: 1px solid var(--border2);
+            padding: 0.35rem 0.9rem;
+            border-radius: 100px;
+            background: var(--surface);
+        }
+
+        /* ── Two-column layout ───────────────────────────── */
+        .two-col {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 1.5rem;
+            align-items: start;
+        }
+
+        @media (max-width: 820px) {
+            .two-col { grid-template-columns: 1fr; }
+        }
+
+        /* ── Card base ───────────────────────────────────── */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 1.25rem;
+            padding: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 0.7rem;
+            font-family: var(--mono);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        /* ── LEFT: User Info Panel ───────────────────────── */
+        .user-info-panel { position: sticky; top: 2rem; }
+
+        .field-group { margin-bottom: 1rem; }
+
+        .field-label {
+            font-family: var(--mono);
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 0.35rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .field-label .icon { font-size: 0.8rem; }
+
+        .field-input {
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 0.6rem;
+            padding: 0.6rem 0.9rem;
+            color: var(--text);
+            font-family: var(--mono);
+            font-size: 0.85rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .field-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+        }
+
+        .field-input::placeholder { color: var(--muted); }
+
+        .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+
+        .user-info-note {
+            font-family: var(--mono);
+            font-size: 0.68rem;
+            color: var(--muted);
+            background: rgba(59,130,246,0.05);
+            border: 1px solid rgba(59,130,246,0.15);
+            border-radius: 0.5rem;
+            padding: 0.6rem 0.8rem;
+            margin-top: 0.5rem;
+            line-height: 1.5;
+        }
+
+        /* personal info match badge */
+        .personal-matches {
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .personal-matches.show { display: block; }
+
+        .match-title {
+            font-family: var(--mono);
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--red);
+            margin-bottom: 0.5rem;
+        }
+
+        .match-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+        }
+
+        .match-tag {
+            font-family: var(--mono);
+            font-size: 0.75rem;
+            background: rgba(239,68,68,0.12);
+            border: 1px solid rgba(239,68,68,0.3);
+            color: #fca5a5;
+            padding: 0.2rem 0.6rem;
+            border-radius: 100px;
+        }
+
+        /* ── RIGHT: Main analyzer ────────────────────────── */
+        .right-col { display: flex; flex-direction: column; gap: 1.25rem; }
+
+        /* Password input */
+        .pwd-card { padding: 1.5rem; }
+
+        .pwd-row {
+            display: flex;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+            align-items: stretch;
+        }
+
+        .pwd-wrap {
+            flex: 1;
+            min-width: 220px;
+            position: relative;
+        }
+
+        .pwd-input {
+            width: 100%;
+            padding: 0.85rem 3rem 0.85rem 1.2rem;
+            background: var(--bg);
+            border: 2px solid var(--border2);
+            border-radius: 0.75rem;
+            color: var(--text);
+            font-family: var(--mono);
+            font-size: 1rem;
+            transition: 0.2s;
+            letter-spacing: 0.05em;
+        }
+
+        .pwd-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+        }
+
+        .eye-btn {
+            position: absolute;
+            right: 0.9rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            font-size: 1.1rem;
+            cursor: pointer;
+            color: var(--muted);
+            transition: color 0.2s;
+            line-height: 1;
+        }
+
+        .eye-btn:hover { color: var(--text); }
+
+        /* Action buttons */
+        .action-btns {
+            display: flex;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+            margin-top: 0.75rem;
+        }
+
+        .btn {
+            font-family: var(--sans);
+            font-weight: 700;
+            font-size: 0.82rem;
+            letter-spacing: 0.5px;
+            border-radius: 0.6rem;
+            padding: 0.65rem 1.2rem;
+            cursor: pointer;
+            border: 1px solid transparent;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+        }
+
+        .btn:hover { transform: translateY(-1px); }
+        .btn:active { transform: translateY(0); }
+
+        .btn-primary {
+            background: var(--accent);
+            border-color: var(--accent2);
+            color: white;
+        }
+        .btn-primary:hover { box-shadow: 0 6px 20px rgba(59,130,246,0.35); }
+
+        .btn-green {
+            background: rgba(16,185,129,0.12);
+            border-color: rgba(16,185,129,0.35);
+            color: #6ee7b7;
+        }
+        .btn-green:hover { background: rgba(16,185,129,0.2); box-shadow: 0 6px 16px rgba(16,185,129,0.2); }
+
+        .btn-yellow {
+            background: rgba(245,158,11,0.12);
+            border-color: rgba(245,158,11,0.3);
+            color: #fcd34d;
+        }
+        .btn-yellow:hover { background: rgba(245,158,11,0.2); box-shadow: 0 6px 16px rgba(245,158,11,0.2); }
+
+        .btn-purple {
+            background: rgba(139,92,246,0.12);
+            border-color: rgba(139,92,246,0.3);
+            color: #c4b5fd;
+        }
+        .btn-purple:hover { background: rgba(139,92,246,0.2); box-shadow: 0 6px 16px rgba(139,92,246,0.2); }
+
+        .btn-loading { opacity: 0.6; pointer-events: none; }
+
+        /* Char badges */
+        .char-row {
+            display: flex;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .char-pill {
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            padding: 0.3rem 0.75rem;
+            border-radius: 100px;
+            border: 1px solid var(--border2);
+            background: var(--bg);
+            color: var(--muted);
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            transition: 0.2s;
+        }
+
+        .char-pill.active {
+            background: rgba(16,185,129,0.1);
+            border-color: rgba(16,185,129,0.35);
+            color: #6ee7b7;
+        }
+
+        .char-pill .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--muted);
+        }
+
+        .char-pill.active .dot { background: var(--green); }
+
+        /* ── Strength meter ───────────────────────────────── */
+        .meter-card {}
+
+        .meter-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 0.75rem;
+        }
+
+        .meter-label { font-size: 0.75rem; color: var(--muted); font-family: var(--mono); }
+
+        .strength-word {
+            font-size: 1.4rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            transition: color 0.3s;
+        }
+
+        .meter-track {
+            height: 8px;
+            background: var(--border);
+            border-radius: 100px;
+            overflow: hidden;
+        }
+
+        .meter-fill {
+            height: 100%;
+            width: 0%;
+            border-radius: 100px;
+            transition: width 0.5s cubic-bezier(0.4,0,0.2,1), background 0.3s;
+        }
+
+        .meter-ticks {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.5rem;
+        }
+
+        .tick {
+            font-family: var(--mono);
+            font-size: 0.6rem;
+            color: var(--muted);
+        }
+
+        /* ── Stats row ───────────────────────────────────── */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.75rem;
+        }
+
+        @media (max-width: 600px) {
+            .stats-row { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        .stat-box {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 0.85rem;
+            padding: 1rem 0.85rem;
+            text-align: center;
+        }
+
+        .stat-lbl {
+            font-family: var(--mono);
+            font-size: 0.62rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 0.4rem;
+        }
+
+        .stat-val {
+            font-family: var(--mono);
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text);
+            line-height: 1;
+        }
+
+        .stat-unit {
+            font-family: var(--mono);
+            font-size: 0.62rem;
+            color: var(--muted);
+            margin-top: 0.2rem;
+        }
+
+        /* ── Crack time ──────────────────────────────────── */
+        .crack-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .crack-lbl {
+            font-family: var(--mono);
+            font-size: 0.7rem;
+            color: var(--muted);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .crack-val {
+            font-family: var(--mono);
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--yellow);
+        }
+
+        /* ── Review banner ───────────────────────────────── */
+        .review-banner {
+            border-left: 3px solid var(--accent);
+            padding: 0.85rem 1.1rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--muted2);
+            background: var(--bg);
+            border-radius: 0 0.75rem 0.75rem 0;
+            transition: 0.2s;
+        }
+
+        /* ── Issues / Tips grid ──────────────────────────── */
+        .bottom-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        @media (max-width: 600px) { .bottom-grid { grid-template-columns: 1fr; } }
+
+        .list-card {}
+
+        .list-card ul { list-style: none; }
+
+        .list-card li {
+            display: flex;
+            gap: 0.5rem;
+            padding: 0.45rem 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.83rem;
+            color: var(--muted2);
+            line-height: 1.45;
+            align-items: flex-start;
+        }
+
+        .list-card li:last-child { border-bottom: none; }
+
+        .list-card li .ico { flex-shrink: 0; font-size: 0.8rem; margin-top: 1px; }
+
+        /* ── Suggestions strip ───────────────────────────── */
+        .sug-strip {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+            margin-top: 1rem;
+        }
+
+        .sug-chip {
+            display: flex;
+            align-items: center;
+            background: var(--bg);
+            border: 1px solid var(--border2);
+            border-radius: 0.5rem;
+            padding: 0.3rem 0.4rem 0.3rem 0.85rem;
+            gap: 0.4rem;
+            transition: border-color 0.2s;
+        }
+
+        .sug-chip:hover { border-color: var(--accent); }
+
+        .sug-pwd {
+            font-family: var(--mono);
+            font-size: 0.78rem;
+            color: var(--muted2);
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .sug-pwd:hover { color: var(--text); }
+
+        .sug-copy {
+            font-family: var(--mono);
+            font-size: 0.65rem;
+            background: var(--surface2);
+            border: 1px solid var(--border2);
+            border-radius: 0.35rem;
+            padding: 0.25rem 0.5rem;
+            color: var(--muted);
+            cursor: pointer;
+            transition: 0.15s;
+        }
+
+        .sug-copy:hover { background: var(--border2); color: var(--text); }
+
+        /* ── Spinner ─────────────────────────────────────── */
+        .spinner {
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255,255,255,0.2);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── Glow pulse on strong ────────────────────────── */
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+            50% { box-shadow: 0 0 20px 4px rgba(16,185,129,0.2); }
+        }
+
+        .glow { animation: glow 2s ease-in-out infinite; }
+    </style>
+</head>
+<body>
+<div class="shell">
+
+    <!-- ── Header ── -->
+    <header>
+        <div>
+            <div class="brand"><span class="icon">🔐</span> PassGuard</div>
+            <div class="brand-sub">Intelligent Password Analyzer</div>
+        </div>
+        <div class="privacy-pill">🔒 Never stored · Structure analysis only</div>
+    </header>
+
+    <!-- ── Two-column layout ── -->
+    <div class="two-col">
+
+        <!-- ── LEFT: User Info ── -->
+        <div class="user-info-panel">
+            <div class="card">
+                <div class="card-title"><span>👤</span> Your Info</div>
+
+                <div class="field-group">
+                    <div class="field-label"><span class="icon">📛</span> Name</div>
+                    <div class="field-row">
+                        <input class="field-input" id="firstName" type="text" placeholder="First name">
+                        <input class="field-input" id="lastName"  type="text" placeholder="Last name">
+                    </div>
+                </div>
+
+                <div class="field-group">
+                    <div class="field-label"><span class="icon">🪪</span> Username</div>
+                    <input class="field-input" id="username" type="text" placeholder="e.g. john_smith">
+                </div>
+
+                <div class="field-group">
+                    <div class="field-label"><span class="icon">📧</span> Email</div>
+                    <input class="field-input" id="email" type="email" placeholder="you@example.com">
+                </div>
+
+                <div class="field-group">
+                    <div class="field-label"><span class="icon">🎂</span> Birthdate</div>
+                    <input class="field-input" id="birthdate" type="date">
+                </div>
+
+                <div class="field-group">
+                    <div class="field-row">
+                        <div>
+                            <div class="field-label"><span class="icon">🐾</span> Pet name</div>
+                            <input class="field-input" id="petName" type="text" placeholder="Buddy">
+                        </div>
+                        <div>
+                            <div class="field-label"><span class="icon">🏙️</span> City</div>
+                            <input class="field-input" id="city" type="text" placeholder="London">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="field-group">
+                    <div class="field-label"><span class="icon">🏢</span> Company</div>
+                    <input class="field-input" id="company" type="text" placeholder="Google">
+                </div>
+
+                <div class="field-group">
+                    <div class="field-label"><span class="icon">📱</span> Phone</div>
+                    <input class="field-input" id="phone" type="tel" placeholder="9876543210">
+                </div>
+
+                <div class="user-info-note">
+                    ℹ️ All fields are optional. Info is used only to detect if your password contains personal details — never sent to any server.
+                </div>
+
+                <!-- Personal match results -->
+                <div class="personal-matches" id="personalMatches">
+                    <div class="match-title">⚠️ Personal tokens found in password</div>
+                    <div class="match-tags" id="matchTags"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── RIGHT: Analyzer ── -->
+        <div class="right-col">
+
+            <!-- Password input card -->
+            <div class="card pwd-card">
+                <div class="card-title"><span>🔑</span> Password</div>
+
+                <div class="pwd-row">
+                    <div class="pwd-wrap">
+                        <input class="pwd-input" type="password" id="passwordInput"
+                               placeholder="Enter your password…" autocomplete="off" spellcheck="false">
+                        <button class="eye-btn" id="eyeBtn">👁</button>
+                    </div>
+                </div>
+
+                <div class="action-btns">
+                    <button class="btn btn-primary" id="checkBtn">🔍 Analyze</button>
+                    <button class="btn btn-green"   id="generateBtn">✨ Generate</button>
+                    <button class="btn btn-yellow"  id="improveBtn">🔧 Improve Mine</button>
+                    <button class="btn btn-purple"  id="suggestBtn">🤖 AI Suggest</button>
+                </div>
+
+                <!-- Char class pills -->
+                <div class="char-row">
+                    <div class="char-pill" id="pillLower">
+                        <span class="dot"></span> Lowercase
+                    </div>
+                    <div class="char-pill" id="pillUpper">
+                        <span class="dot"></span> Uppercase
+                    </div>
+                    <div class="char-pill" id="pillDigit">
+                        <span class="dot"></span> Digits
+                    </div>
+                    <div class="char-pill" id="pillSymbol">
+                        <span class="dot"></span> Symbols
+                    </div>
+                    <div class="char-pill" id="pillLength">
+                        <span class="dot"></span> <span id="lengthLabel">0 chars</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI suggestions strip (hidden until used) -->
+            <div id="sugCard" class="card" style="display:none; padding:1.25rem 1.5rem;">
+                <div class="card-title"><span>💡</span> Suggested Passwords</div>
+                <div class="sug-strip" id="sugStrip"></div>
+            </div>
+
+            <!-- Strength meter -->
+            <div class="card meter-card">
+                <div class="meter-top">
+                    <span class="meter-label">STRENGTH</span>
+                    <span class="strength-word" id="strengthWord" style="color:var(--muted);">—</span>
+                </div>
+                <div class="meter-track">
+                    <div class="meter-fill" id="meterFill"></div>
+                </div>
+                <div class="meter-ticks">
+                    <span class="tick">Very Weak</span>
+                    <span class="tick">Weak</span>
+                    <span class="tick">Fair</span>
+                    <span class="tick">Good</span>
+                    <span class="tick">Strong</span>
+                </div>
+            </div>
+
+            <!-- Stats row -->
+            <div class="stats-row">
+                <div class="stat-box">
+                    <div class="stat-lbl">Score</div>
+                    <div class="stat-val" id="statScore">—</div>
+                    <div class="stat-unit">/100</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-lbl">Entropy</div>
+                    <div class="stat-val" id="statEntropy">—</div>
+                    <div class="stat-unit">bits</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-lbl">ML Risk</div>
+                    <div class="stat-val" id="statRisk">—</div>
+                    <div class="stat-unit" id="statConf"></div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-lbl">Length</div>
+                    <div class="stat-val" id="statLength">—</div>
+                    <div class="stat-unit">chars</div>
+                </div>
+            </div>
+
+            <!-- Crack time -->
+            <div class="card crack-card">
+                <div>
+                    <div class="crack-lbl">⏱ Est. Crack Time</div>
+                    <div style="font-family:var(--mono);font-size:0.65rem;color:var(--muted);margin-top:0.2rem;">Advanced hybrid attack model</div>
+                </div>
+                <div class="crack-val" id="crackVal">—</div>
+            </div>
+
+            <!-- Review banner -->
+            <div class="review-banner" id="reviewBanner">
+                Enter a password and press <strong>Analyze</strong> to begin.
+            </div>
+
+            <!-- Issues & Tips -->
+            <div class="bottom-grid">
+                <div class="card list-card">
+                    <div class="card-title"><span>⚠️</span> Issues</div>
+                    <ul id="issueList"><li><span class="ico">·</span> Run analysis to see issues</li></ul>
+                </div>
+                <div class="card list-card">
+                    <div class="card-title"><span>💡</span> Tips</div>
+                    <ul id="tipList"><li><span class="ico">·</span> Run analysis to see tips</li></ul>
+                </div>
+            </div>
+
+        </div><!-- /right-col -->
+    </div><!-- /two-col -->
+</div><!-- /shell -->
+
+<script>
+/* ─────────────────────────────────────────────────────────────
+   Helpers
+───────────────────────────────────────────────────────────── */
+const $ = id => document.getElementById(id);
+
+function collectUserInfo() {
+    return {
+        first_name: $('firstName').value.trim()  || null,
+        last_name:  $('lastName').value.trim()   || null,
+        username:   $('username').value.trim()   || null,
+        email:      $('email').value.trim()      || null,
+        birthdate:  $('birthdate').value.trim()  || null,
+        pet_name:   $('petName').value.trim()    || null,
+        city:       $('city').value.trim()       || null,
+        company:    $('company').value.trim()    || null,
+        phone:      $('phone').value.trim()      || null,
+    };
+}
+
+/* ── Personal info token matcher (mirrors Python logic, client-side) ── */
+function getUserInfoTokens(info) {
+    const tokens = new Set();
+    const add = v => { if (v && v.length >= 3) tokens.add(v.toLowerCase()); };
+
+    ['first_name','last_name','username','pet_name','city','company'].forEach(k => add(info[k]));
+
+    if (info.email && info.email.includes('@')) {
+        const local = info.email.split('@')[0].toLowerCase();
+        add(local);
+        local.split(/[._\-]/).forEach(add);
+    }
+
+    if (info.birthdate) {
+        const parts = info.birthdate.split(/[-/.]/);
+        parts.forEach(add);
+        if (parts.length === 3) {
+            let year, month, day;
+            if (parts[0].length === 4) { [year, month, day] = parts; }
+            else                        { [day, month, year] = parts; }
+            const sy = year.slice(-2);
+            [month+day, day+month, sy, year,
+             day+month+sy, month+day+sy,
+             day+month+year].forEach(add);
+        }
+    }
+
+    if (info.phone) {
+        const d = info.phone.replace(/\D/g,'');
+        if (d.length >= 3) {
+            add(d);
+            if (d.length >= 4) add(d.slice(-4));
+            if (d.length >= 6) add(d.slice(-6));
+        }
+    }
+    return [...tokens];
+}
+
+function checkPersonalInfo(password, info) {
+    if (!password || !info) return [];
+    const lower = password.toLowerCase();
+    return getUserInfoTokens(info).filter(t => lower.includes(t));
+}
+
+function renderPersonalMatches(matches) {
+    const box  = $('personalMatches');
+    const tags = $('matchTags');
+    if (!matches || matches.length === 0) {
+        box.classList.remove('show');
+        return;
+    }
+    tags.innerHTML = matches.map(m =>
+        `<span class="match-tag">${m}</span>`
+    ).join('');
+    box.classList.add('show');
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Char-class pills (real-time)
+───────────────────────────────────────────────────────────── */
+function updatePills(pwd) {
+    const set = (id, active) => {
+        const el = $(id);
+        el.classList.toggle('active', active);
+        el.querySelector('.dot').style.background = active ? 'var(--green)' : 'var(--muted)';
+    };
+    set('pillLower',  /[a-z]/.test(pwd));
+    set('pillUpper',  /[A-Z]/.test(pwd));
+    set('pillDigit',  /[0-9]/.test(pwd));
+    set('pillSymbol', /[^a-zA-Z0-9]/.test(pwd));
+
+    const lenOk = pwd.length >= 12;
+    set('pillLength', lenOk);
+    $('lengthLabel').textContent = pwd.length + ' chars';
+    $('statLength').textContent  = pwd.length || '—';
+}
+
+$('passwordInput').addEventListener('input', e => {
+    updatePills(e.target.value);
+    // Live personal-info check
+    const matches = checkPersonalInfo(e.target.value, collectUserInfo());
+    renderPersonalMatches(matches);
+});
+
+// Also re-check when user info changes
+['firstName','lastName','username','email','birthdate',
+ 'petName','city','company','phone'].forEach(id => {
+    $(id).addEventListener('input', () => {
+        const pwd = $('passwordInput').value;
+        if (!pwd) return;
+        renderPersonalMatches(checkPersonalInfo(pwd, collectUserInfo()));
+    });
+});
+
+/* ─────────────────────────────────────────────────────────────
+   Toggle password visibility
+───────────────────────────────────────────────────────────── */
+$('eyeBtn').addEventListener('click', () => {
+    const inp = $('passwordInput');
+    const vis = inp.type === 'text';
+    inp.type = vis ? 'password' : 'text';
+    $('eyeBtn').textContent = vis ? '👁' : '🙈';
+});
+
+/* ─────────────────────────────────────────────────────────────
+   Score → color / label
+───────────────────────────────────────────────────────────── */
+function scoreInfo(score) {
+    if (score < 20) return { color: '#ef4444', label: 'Very Weak' };
+    if (score < 40) return { color: '#f97316', label: 'Weak' };
+    if (score < 60) return { color: '#eab308', label: 'Fair' };
+    if (score < 80) return { color: '#22c55e', label: 'Good' };
+    return { color: '#10b981', label: 'Strong' };
+}
+
+function reviewText(score) {
+    if (score >= 80) return "🏆 Excellent — this password is fortress-grade!";
+    if (score >= 60) return "👍 Pretty solid, but a little more variety wouldn't hurt.";
+    if (score >= 40) return "⚡ Moderate — avoid common words and predictable patterns.";
+    if (score >= 20) return "⚠️ Risky — make it longer, more random, and unique.";
+    return "🚨 Very weak — do not use this anywhere!";
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Render analysis result
+───────────────────────────────────────────────────────────── */
+function renderResult(data) {
+    const { color, label } = scoreInfo(data.score);
+
+    // Meter
+    $('meterFill').style.width      = data.score + '%';
+    $('meterFill').style.background = color;
+    $('strengthWord').textContent   = label;
+    $('strengthWord').style.color   = color;
+
+    // Stats
+    $('statScore').textContent   = data.score;
+    $('statEntropy').textContent = data.entropy;
+    $('statRisk').textContent    = data.ml_risk ?? '—';
+    $('statConf').textContent    = data.ml_confidence
+        ? `${Math.round(data.ml_confidence * 100)}% confidence` : '';
+
+    // Crack time
+    $('crackVal').textContent = data.crack_time_advanced || data.crack_time || '—';
+
+    // Review
+    $('reviewBanner').innerHTML = reviewText(data.score);
+    $('reviewBanner').style.borderLeftColor = color;
+
+    // Issues
+    const issueUl = $('issueList');
+    if (data.issues && data.issues.length) {
+        issueUl.innerHTML = data.issues.map(i =>
+            `<li><span class="ico">⚠️</span>${i}</li>`
+        ).join('');
+    } else {
+        issueUl.innerHTML = '<li><span class="ico">✅</span> No issues found</li>';
+    }
+
+    // Tips
+    const tipUl = $('tipList');
+    if (data.suggestions && data.suggestions.length) {
+        tipUl.innerHTML = data.suggestions.map(s =>
+            `<li><span class="ico">💡</span>${s}</li>`
+        ).join('');
+    } else {
+        tipUl.innerHTML = '<li><span class="ico">👍</span> Great password!</li>';
+    }
+
+    // Glow on strong
+    const meter = document.querySelector('.meter-card');
+    if (data.score >= 80) meter.classList.add('glow');
+    else meter.classList.remove('glow');
+
+    // Personal matches from backend (authoritative)
+    if (data.user_info_matches && data.user_info_matches.length) {
+        renderPersonalMatches(data.user_info_matches);
+    }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Analyze password  →  POST /check
+───────────────────────────────────────────────────────────── */
+$('checkBtn').addEventListener('click', async () => {
+    const password = $('passwordInput').value;
+    if (!password) { alert('Please enter a password.'); return; }
+
+    const btn = $('checkBtn');
+    btn.classList.add('btn-loading');
+    btn.innerHTML = '<span class="spinner"></span> Analyzing…';
+
+    try {
+        const resp = await fetch('/check', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                password,
+                user_info: collectUserInfo(),   // ← send user info to backend
+            })
+        });
+        if (!resp.ok) throw new Error('API error');
+        const data = await resp.json();
+        renderResult(data);
+    } catch (err) {
+        console.error(err);
+        $('reviewBanner').textContent = '⚠️ Backend unavailable. Please try again.';
+    } finally {
+        btn.classList.remove('btn-loading');
+        btn.innerHTML = '🔍 Analyze';
+    }
+});
+
+/* ─────────────────────────────────────────────────────────────
+   Generate strong password (client-side)
+───────────────────────────────────────────────────────────── */
+function generateStrongPassword(length = 16) {
+    const lc  = 'abcdefghijklmnopqrstuvwxyz';
+    const uc  = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const dig = '0123456789';
+    const sym = '!@#$%^&*()_-+=<>?';
+    const all = lc + uc + dig + sym;
+    let pwd   = lc[Math.random()*lc.length|0]
+              + uc[Math.random()*uc.length|0]
+              + dig[Math.random()*dig.length|0]
+              + sym[Math.random()*sym.length|0];
+    for (let i = 4; i < length; i++) pwd += all[Math.random()*all.length|0];
+    return [...pwd].sort(() => Math.random()-0.5).join('');
+}
+
+$('generateBtn').addEventListener('click', () => {
+    const pwd = generateStrongPassword(16);
+    $('passwordInput').value = pwd;
+    $('passwordInput').type  = 'password';
+    $('eyeBtn').textContent  = '👁';
+    updatePills(pwd);
+    renderPersonalMatches(checkPersonalInfo(pwd, collectUserInfo()));
+});
+
+/* ─────────────────────────────────────────────────────────────
+   Improve Mine  →  POST /suggest_from_user
+───────────────────────────────────────────────────────────── */
+$('improveBtn').addEventListener('click', async () => {
+    const pwd = $('passwordInput').value;
+    if (!pwd) { alert('Enter a password to improve.'); return; }
+
+    const btn = $('improveBtn');
+    btn.classList.add('btn-loading');
+    btn.innerHTML = '<span class="spinner"></span> Improving…';
+
+    try {
+        const resp = await fetch('/suggest_from_user', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: pwd, count: 5 })
+        });
+        if (!resp.ok) throw new Error();
+        const suggestions = await resp.json();
+        renderSuggestions(suggestions, 'Improved versions of your password');
+    } catch {
+        $('sugCard').style.display = 'block';
+        $('sugStrip').innerHTML = '<span style="color:var(--red);font-size:0.8rem;">⚠️ Backend unavailable</span>';
+    } finally {
+        btn.classList.remove('btn-loading');
+        btn.innerHTML = '🔧 Improve Mine';
+    }
+});
+
+/* ─────────────────────────────────────────────────────────────
+   AI Suggest  →  POST /suggest
+───────────────────────────────────────────────────────────── */
+$('suggestBtn').addEventListener('click', async () => {
+    const btn = $('suggestBtn');
+    btn.classList.add('btn-loading');
+    btn.innerHTML = '<span class="spinner"></span> Generating…';
+
+    try {
+        const resp = await fetch('/suggest', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ length: 16, count: 5 })
+        });
+        if (!resp.ok) throw new Error();
+        const suggestions = await resp.json();
+        renderSuggestions(suggestions, 'AI-generated strong passwords');
+    } catch {
+        $('sugCard').style.display = 'block';
+        $('sugStrip').innerHTML = '<span style="color:var(--red);font-size:0.8rem;">⚠️ Backend unavailable</span>';
+    } finally {
+        btn.classList.remove('btn-loading');
+        btn.innerHTML = '🤖 AI Suggest';
+    }
+});
+
+function renderSuggestions(list, titleText) {
+    const card  = $('sugCard');
+    const strip = $('sugStrip');
+    card.style.display = 'block';
+    card.querySelector('.card-title').innerHTML =
+        `<span>💡</span> ${titleText}`;
+
+    strip.innerHTML = '';
+    list.forEach(pwd => {
+        const chip  = document.createElement('div');
+        chip.className = 'sug-chip';
+
+        const span = document.createElement('span');
+        span.className   = 'sug-pwd';
+        span.textContent = pwd;
+        span.title       = 'Click to use';
+        span.addEventListener('click', () => {
+            $('passwordInput').value = pwd;
+            $('passwordInput').type  = 'password';
+            $('eyeBtn').textContent  = '👁';
+            updatePills(pwd);
+            renderPersonalMatches(checkPersonalInfo(pwd, collectUserInfo()));
+        });
+
+        const copy = document.createElement('button');
+        copy.className   = 'sug-copy';
+        copy.textContent = '📋';
+        copy.title       = 'Copy';
+        copy.addEventListener('click', e => {
+            e.stopPropagation();
+            navigator.clipboard.writeText(pwd).then(() => {
+                copy.textContent = '✅';
+                setTimeout(() => { copy.textContent = '📋'; }, 1500);
+            });
+        });
+
+        chip.appendChild(span);
+        chip.appendChild(copy);
+        strip.appendChild(chip);
+    });
+}
+
+/* ── Init ─────────────────────────────────────────────────── */
+updatePills('');
+</script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+.vercel
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.env
+
+# Ignore data and large files
+data/
+*.pkl
+*.json
+!vercel.json
+markov_sample.txt

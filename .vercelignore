@@ -1,0 +1,14 @@
+# Virtual environments and caches
+venv/
+__pycache__/
+*.pyc
+.git/
+.gitignore
+
+# Large training and sample datasets (Exceeds Vercel 250MB limit)
+data/realhuman_phill.txt
+markov_sample.txt
+rules_sample.txt
+
+# Notebooks and other dev files
+*.ipynb
