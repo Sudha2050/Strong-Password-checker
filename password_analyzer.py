@@ -44,8 +44,12 @@ def load_wordlists(data_dir='data'):
     import os
     def load(fname):
         path = os.path.join(data_dir, fname)
-        with open(path, 'r', encoding='utf-8', errors='ignore') as f:
-            return {line.strip().lower() for line in f if line.strip()}
+        try:
+            with open(path, 'r', encoding='utf-8', errors='ignore') as f:
+                return {line.strip().lower() for line in f if line.strip()}
+        except Exception:
+            print(f"⚠️  Wordlist not found: {fname}")
+            return set()
     PASSWORDS      = load('passwords.txt')
     ENGLISH_WORDS  = load('english_wikipedia.txt')
     FEMALE_NAMES   = load('female_names.txt')
