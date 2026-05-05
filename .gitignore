@@ -14,3 +14,4 @@ data/
 *.json
 !vercel.json
 markov_sample.txt
+rules_sample.txt
